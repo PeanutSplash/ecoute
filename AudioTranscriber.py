@@ -19,6 +19,7 @@ class AudioTranscriber:
         self.transcript_data = {"You": [], "Speaker": []}
         self.transcript_changed_event = threading.Event()
         self.audio_model = model
+        self.mic_transcription_enabled = True
         self.audio_sources = {
             "You": {
                 "sample_rate": mic_source.SAMPLE_RATE,
@@ -43,6 +44,8 @@ class AudioTranscriber:
     def transcribe_audio_queue(self, audio_queue):
         while True:
             who_spoke, data, time_spoken = audio_queue.get()
+            if who_spoke == "You" and not self.mic_transcription_enabled:
+                continue
             self.update_last_sample_and_phrase_status(who_spoke, data, time_spoken)
             source_info = self.audio_sources[who_spoke]
 

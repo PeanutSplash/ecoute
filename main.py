@@ -11,8 +11,11 @@ import TranscriberModels
 import subprocess
 
 def write_in_textbox(textbox, text):
-    textbox.delete("0.0", "end")
-    textbox.insert("0.0", text)
+    current_content = textbox.get("0.0", "end")
+    if current_content.strip() != text.strip():
+        print(text)
+        textbox.delete("0.0", "end")
+        textbox.insert("0.0", text)
 
 def update_transcript_UI(transcriber, textbox):
     transcript_string = transcriber.get_transcript()
@@ -38,7 +41,7 @@ def clear_context(transcriber, audio_queue):
     with audio_queue.mutex:
         audio_queue.queue.clear()
 
-def create_ui_components(root):
+def create_ui_components(root, transcriber, audio_queue, freeze_state):
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("dark-blue")
     root.title("面试小助手")
@@ -64,7 +67,16 @@ def create_ui_components(root):
     update_interval_slider.set(2)
     update_interval_slider.grid(row=3, column=1, padx=10, pady=10, sticky="nsew")
 
-    return transcript_textbox, response_textbox, update_interval_slider, update_interval_slider_label, freeze_button
+    clear_transcript_button = ctk.CTkButton(root, text="清除历史消息",
+                                            command=lambda: clear_context(transcriber, audio_queue), font=global_font)
+    clear_transcript_button.grid(row=1, column=0, padx=10, pady=3, sticky="nsew")
+
+    mic_transcription_button = ctk.CTkButton(
+        root, text="暂停麦克风转录", command=lambda: toggle_mic_transcription(transcriber, mic_transcription_button), font=global_font
+    )
+    mic_transcription_button.grid(row=2, column=0, padx=10, pady=3, sticky="nsew")
+
+    return transcript_textbox, response_textbox, update_interval_slider, update_interval_slider_label, freeze_button, clear_transcript_button, mic_transcription_button
 
 def main():
     try:
@@ -74,8 +86,6 @@ def main():
         return
 
     root = ctk.CTk()
-    transcript_textbox, response_textbox, update_interval_slider, update_interval_slider_label, freeze_button = create_ui_components(root)
-
     audio_queue = queue.Queue()
 
     user_audio_recorder = AudioRecorder.DefaultMicRecorder()
@@ -100,20 +110,11 @@ def main():
 
     print("READY")
 
-    root.grid_rowconfigure(0, weight=100)
-    root.grid_rowconfigure(1, weight=1)
-    root.grid_rowconfigure(2, weight=1)
-    root.grid_rowconfigure(3, weight=1)
-    root.grid_columnconfigure(0, weight=2)
-    root.grid_columnconfigure(1, weight=1)
-
-     # Add the clear transcript button to the UI
-    clear_transcript_button = ctk.CTkButton(root, text="清除历史消息",command=lambda: clear_context(transcriber, audio_queue))
-    clear_transcript_button.grid(row=1, column=0, padx=10, pady=3, sticky="nsew")
-
-    freeze_state = [False]  # Using list to be able to change its content inside inner functions
+    freeze_state = [False]
+    transcript_textbox, response_textbox, update_interval_slider, update_interval_slider_label, freeze_button, clear_transcript_button, mic_transcription_button = create_ui_components(
+        root, transcriber, audio_queue, freeze_state)
     def freeze_unfreeze():
-        freeze_state[0] = not freeze_state[0]  # Invert the freeze state
+        freeze_state[0] = not freeze_state[0]
         freeze_button.configure(text="继续" if freeze_state[0] else "暂停输出")
 
     freeze_button.configure(command=freeze_unfreeze)
@@ -122,7 +123,21 @@ def main():
 
     update_transcript_UI(transcriber, transcript_textbox)
     update_response_UI(responder, response_textbox, update_interval_slider_label, update_interval_slider, freeze_state)
+
+    root.grid_rowconfigure(0, weight=100)
+    root.grid_rowconfigure(1, weight=1)
+    root.grid_rowconfigure(2, weight=1)
+    root.grid_rowconfigure(3, weight=1)
+    root.grid_columnconfigure(0, weight=2)
+    root.grid_columnconfigure(1, weight=1)
     root.mainloop()
 
+def toggle_mic_transcription(transcriber, button):
+    transcriber.mic_transcription_enabled = not transcriber.mic_transcription_enabled
+    if transcriber.mic_transcription_enabled:
+        button.configure(text="暂停麦克风录制")
+    else:
+        button.configure(text="启用麦克风录制")
+        
 if __name__ == "__main__":
     main()
