@@ -4,11 +4,12 @@ from prompts import create_prompt, INITIAL_RESPONSE
 import time
 
 openai.api_key = OPENAI_API_KEY
+openai.api_base = 'https://api2.aigcbest.top/v1'
 
 def generate_response_from_transcript(transcript):
     try:
         response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo-0301",
+                model="gpt-4o-mini",
                 messages=[{"role": "system", "content": create_prompt(transcript)}],
                 temperature = 0.0
         )

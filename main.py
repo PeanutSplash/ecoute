@@ -29,7 +29,7 @@ def update_response_UI(responder, textbox, update_interval_slider_label, update_
 
         update_interval = int(update_interval_slider.get())
         responder.update_response_interval(update_interval)
-        update_interval_slider_label.configure(text=f"Update interval: {update_interval} seconds")
+        update_interval_slider_label.configure(text=f"更新间隔：{update_interval} 秒")
 
     textbox.after(300, update_response_UI, responder, textbox, update_interval_slider_label, update_interval_slider, freeze_state)
 
@@ -41,22 +41,23 @@ def clear_context(transcriber, audio_queue):
 def create_ui_components(root):
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("dark-blue")
-    root.title("Ecoute")
+    root.title("面试小助手")
     root.configure(bg='#252422')
     root.geometry("1000x600")
+    root.option_add("*Font", "SimSun 16")
 
-    font_size = 20
+    global_font = ("SimSun", 16)
 
-    transcript_textbox = ctk.CTkTextbox(root, width=300, font=("Arial", font_size), text_color='#FFFCF2', wrap="word")
+    transcript_textbox = ctk.CTkTextbox(root, width=300, font=global_font, text_color='#FFFCF2', wrap="word")
     transcript_textbox.grid(row=0, column=0, padx=10, pady=20, sticky="nsew")
 
-    response_textbox = ctk.CTkTextbox(root, width=300, font=("Arial", font_size), text_color='#639cdc', wrap="word")
+    response_textbox = ctk.CTkTextbox(root, width=300, font=global_font, text_color='#639cdc', wrap="word")
     response_textbox.grid(row=0, column=1, padx=10, pady=20, sticky="nsew")
 
-    freeze_button = ctk.CTkButton(root, text="Freeze", command=None)
+    freeze_button = ctk.CTkButton(root, text="暂停输出", command=None, font=global_font)
     freeze_button.grid(row=1, column=1, padx=10, pady=3, sticky="nsew")
 
-    update_interval_slider_label = ctk.CTkLabel(root, text=f"", font=("Arial", 12), text_color="#FFFCF2")
+    update_interval_slider_label = ctk.CTkLabel(root, text=f"", font=("SimSun", 12), text_color="#FFFCF2")
     update_interval_slider_label.grid(row=2, column=1, padx=10, pady=3, sticky="nsew")
 
     update_interval_slider = ctk.CTkSlider(root, from_=1, to=10, width=300, height=20, number_of_steps=9)
@@ -69,7 +70,7 @@ def main():
     try:
         subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
-        print("ERROR: The ffmpeg library is not installed. Please install ffmpeg and try again.")
+        print("错误：未安装 ffmpeg 库。请安装 ffmpeg 后重试。")
         return
 
     root = ctk.CTk()
@@ -107,21 +108,20 @@ def main():
     root.grid_columnconfigure(1, weight=1)
 
      # Add the clear transcript button to the UI
-    clear_transcript_button = ctk.CTkButton(root, text="Clear Transcript", command=lambda: clear_context(transcriber, audio_queue, ))
+    clear_transcript_button = ctk.CTkButton(root, text="清除历史消息",command=lambda: clear_context(transcriber, audio_queue))
     clear_transcript_button.grid(row=1, column=0, padx=10, pady=3, sticky="nsew")
 
     freeze_state = [False]  # Using list to be able to change its content inside inner functions
     def freeze_unfreeze():
         freeze_state[0] = not freeze_state[0]  # Invert the freeze state
-        freeze_button.configure(text="Unfreeze" if freeze_state[0] else "Freeze")
+        freeze_button.configure(text="继续" if freeze_state[0] else "暂停输出")
 
     freeze_button.configure(command=freeze_unfreeze)
 
-    update_interval_slider_label.configure(text=f"Update interval: {update_interval_slider.get()} seconds")
+    update_interval_slider_label.configure(text=f"更新间隔：{update_interval_slider.get()} 秒")
 
     update_transcript_UI(transcriber, transcript_textbox)
     update_response_UI(responder, response_textbox, update_interval_slider_label, update_interval_slider, freeze_state)
- 
     root.mainloop()
 
 if __name__ == "__main__":
