@@ -12,14 +12,13 @@ def get_model(use_api):
 class WhisperTranscriber:
     def __init__(self):
         self.audio_model = whisper.load_model(os.path.join(os.getcwd(), 'tiny.en.pt'))
-        print(f"[INFO] Whisper using GPU: " + str(torch.cuda.is_available()))
+        print(f"[信息] Whisper 使用 GPU: {str(torch.cuda.is_available())}")
 
     def get_transcription(self, wav_file_path):
         try:
             result = self.audio_model.transcribe(
                 wav_file_path,
-                fp16=torch.cuda.is_available(),
-                language='zh'
+                fp16=torch.cuda.is_available()
             )
         except Exception as e:
             print(e)
@@ -32,8 +31,7 @@ class APIWhisperTranscriber:
             with open(wav_file_path, "rb") as audio_file:
                 result = openai.Audio.transcribe(
                     "whisper-1",
-                    audio_file,
-                    language='zh'
+                    audio_file
                 )
         except Exception as e:
             print(e)

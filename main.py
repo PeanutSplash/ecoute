@@ -13,7 +13,6 @@ import subprocess
 def write_in_textbox(textbox, text):
     current_content = textbox.get("0.0", "end")
     if current_content.strip() != text.strip():
-        print(text)
         textbox.delete("0.0", "end")
         textbox.insert("0.0", text)
 
@@ -72,7 +71,7 @@ def create_ui_components(root, transcriber, audio_queue, freeze_state):
     clear_transcript_button.grid(row=1, column=0, padx=10, pady=3, sticky="nsew")
 
     mic_transcription_button = ctk.CTkButton(
-        root, text="暂停麦克风转录", command=lambda: toggle_mic_transcription(transcriber, mic_transcription_button), font=global_font
+        root, text="暂停麦克风录制", command=lambda: toggle_mic_transcription(transcriber, mic_transcription_button), font=global_font
     )
     mic_transcription_button.grid(row=2, column=0, padx=10, pady=3, sticky="nsew")
 
